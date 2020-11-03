@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>
+			Revision Dungeon
+		</title>
+	</head>
+	
+	<body>
+		<canvas id="myCanvas" width="640" height="480" style="background:lightgrey"></canvas>
+		
+		<script>
+			//create image function
+			var iamges = [];
+			function createImage(img, source){
+				img.src = source;
+				img.onload = function(){images.push(img.src);};
+			};
+			
+			//load sprites 
+			var spr_wall = new Image();
+			createImage(spr_wall, "src/wall.png");
+		
+			var spr_warrior = new Image();
+			createImage(spr_warrior, "src/warrior.png");
+			
+			var spr_warriorL = new Image();
+			createImage(spr_warriorL, "src/warriorL.png");
+		
+			var spr_ranger = new Image();
+			createImage(spr_ranger , "src/ranger.png");
+			
+			var spr_rangerL = new Image();
+			createImage(spr_rangerL , "src/rangerL.png");
+			
+			var spr_mage = new Image();
+			createImage(spr_mage, "src/mage.png");
+			
+			var spr_mageL = new Image();
+			createImage(spr_mageL, "src/mageL.png");
+			
+			var spr_slime = new Image();
+			createImage(spr_slime, "src/slime.png");
+		
+			var spr_slimeL = new Image();
+			createImage(spr_slimeL, "src/slimeL.png");
+		
+			var spr_goblin = new Image();
+			createImage(spr_goblin, "src/goblin.png");
+		
+			var spr_goblinL = new Image();
+			createImage(spr_goblinL, "src/goblinL.png");
+		
+			//create questions array 
+			var questionsArray = [
+				
+				[
+					[
+						"What number system do humans most frequently use?",
+					],
+					
+					[
+						"Denary",
+						"Denary system",
+					],
+				],
+				
+				[
+					[
+						"What number system do computers use?"
+					],
+					
+					[
+						"Binary",
+						"Binary system"
+					],
+				],
+				
+				[
+					[
+						"Computers use binary because their t__________ can only be on (1) of off (0).",
+					],
+					
+					[
+						"Transistors"
+					],
+				],
+				
+				[
+					[
+						"What boolean operation takes two inputs and outputs 1 if both inputs are 1?",
+					],
+					
+					[
+						"AND",
+					],
+				],
+				
+				[
+					[
+						"What boolean operation takes two inputs and outputs 1 if either or both are 1?"
+					],
+					
+					[
+						"OR",
+					],
+				],
+				
+				[
+					[
+						"What boolean operation takes one input and reverses it?"
+					],
+					
+					[
+						"NOT",
+					],
+				],
+			];
+			
+			//get canvas and context
+			var canvas = document.getElementById("myCanvas")
+			var ctx = canvas.getContext("2d");
+			var state = "game";
+			var turn = 1;
+			var players = 0;
+			var gameObjects = [];
+			var level = 0;
+			var tileX = 0;
+			var tileY = 0;
+			var tileSize = 16;
+			var player1Class = "ranger";
+			var player2Class = "warrior";
+			var player3Class = "mage";
+			var player4Class = "ranger";
+			var playerInstance = null;
+			var enemy = 0;
+			var combatant = 0;
+			var answerString = "";
+			var fontSize = 16;
+			var mainFont = "Arial";
+			var playerAttacking = "no";
+			var playerX = 0;
+			var playerY = 0;
+			var enemyAttacking = "no";
+			var enemyX = 0;
+			var enemyY = 0;
+			var gravity = 0.2;
+			var enemyCountdown = 180;
+			var maxEnemyCountdown = 180;
+			
+			//create input object 
+			var input = {
+				up: false,
+				down: false,
+				left: false,
+				right: false,
+				space: false,
+				x: false,
+				y: false,
+				mouse: false,
+				mouseDown: false,
+				upDown: false,
+				downDown: false,
+				leftDown: false,
+				rightDown: false,
+				spaceDown: false,
+			};
+			
+			//create map variables 
+			var g = "g"; //goblin
+			var s = "s"; //slime
+			
+			//create levels 
+			var levels = [
+				/*
+					[
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				],
+				*/
+			
+				[
+					0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+					0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					s,1,0,0,0,0,0,1,0,g,0,1,1,1,1,1,1,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,s,0,0,0,0,g,0,1,1,1,1,1,1,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,0,0,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				],
+				
+				[
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+					0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+				],
+			];
+			
+			//create player class 
+			class player {
+				constructor(x,y,id,charClass){
+					this.x = x;
+					this.y = y;
+					this.id = id;
+					this.width = tileSize;
+					this.height = tileSize;
+					this.alive = true;
+					this.charClass = charClass;
+					this.type = "player";
+					this.speed = 1;
+					this.lives = 1;
+					this.strength = 1;
+					this.moves = 0;
+					this.moveDistance = tileSize;
+					this.resetTurns = true;
+					this.sprite = spr_warrior;
+					this.direction = "right";
+					
+					//decide what to set speed to 
+					if(this.charClass == "warrior"){
+						this.speed = 3;
+						this.lives = 4;
+						this.strength = 3; 
+						this.sprite = spr_warrior;
+					} else if(this.charClass == "ranger"){
+						this.speed = 5;
+						this.lives = 3;
+						this.strength = 2;
+						this.sprite = spr_ranger;
+					} else if(this.charClass == "mage"){
+						this.speed = 2;
+						this.lives = 3;
+						this.strength = 5;
+						this.sprite = spr_mage;
+					};
+					
+					gameObjects.push(this);
+				};
+				
+				update(){
+					//move or something idk
+					if(turn == this.id){
+						//reset turn 
+						if(this.resetTurns == true){
+							this.moves = this.speed;
+							this.resetTurns = false;
+							playerInstance = this;
+						};
+					
+						//check if any moves are left 
+						if(this.moves > 0){
+							if(input.left && !input.leftDown){
+								if(this.x - this.moveDistance > 0 && !collidingWithWall(this.x - this.moveDistance, this.y, this.width, this.height)){
+									//move left 
+									this.moves --;
+									this.x -= this.moveDistance;
+									this.direction = "left";
+								};
+							} else if(input.right && !input.rightDown){
+								if(this.x + this.moveDistance < canvas.width && !collidingWithWall(this.x + this.moveDistance, this.y, this.width, this.height)){
+									//move right 
+									this.moves --;
+									this.x += this.moveDistance;
+									this.direction = "right";
+								};
+							} else if(input.up && !input.upDown){
+								if(this.y - this.moveDistance > 0 && !collidingWithWall(this.x, this.y - this.moveDistance, this.width, this.height)){
+									//move up 
+									this.moves --;
+									this.y -= this.moveDistance;
+								};
+							} else if(input.down && !input.downDown){
+								if(this.y + this.moveDistance < canvas.height && !collidingWithWall(this.x, this.y + this.moveDistance, this.width, this.height)){
+									//move down 
+									this.moves --;
+									this.y += this.moveDistance;
+								};
+							};
+						} else {
+							//change turn
+							if(input.space && input.spaceDown == false){
+								turn ++;
+								this.resetTurns = true;
+								
+								if(turn > players){
+									turn = 1;
+								};
+							};
+						};
+					};
+				};
+				
+				draw(){
+					//draw 
+					switch(this.id){
+						case 1:
+							ctx.fillStyle = "red";
+							break;
+						
+						case 2:
+							ctx.fillStyle = "blue";
+							break;
+						
+						case 3:
+							ctx.fillStyle = "yellow";
+							break;
+						
+						case 4:
+							ctx.fillStyle = "green";
+							break;
+					};
+					
+					//decide sprite
+					if(this.charClass == "warrior"){
+						//set warrior image
+						if(this.direction == "left"){
+							this.sprite = spr_warriorL;
+						} else {
+							this.sprite = spr_warrior;
+						};
+					} else if(this.charClass == "ranger"){
+						//set ranger image
+						if(this.direction == "left"){
+							this.sprite = spr_rangerL;
+						} else {
+							this.sprite = spr_ranger;
+						};
+					} else {
+						//set mage image
+						if(this.direction == "left"){
+							this.sprite = spr_mageL;
+						} else {
+							this.sprite = spr_mage;
+						};
+					};
+					
+					//draw
+					ctx.drawImage(this.sprite,this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+				};
+			};
+			
+			//create slime 
+			class slime {
+				constructor(x,y,questions){
+					this.x = x;
+					this.y = y;
+					this.width = tileSize;
+					this.height = tileSize;
+					this.type = "enemy";
+					this.alive = true;
+					this.questions = questions;
+					this.direction = "left";
+					this.sprite = spr_slimeL;
+					gameObjects.push(this);
+				};
+				
+				update(){
+					//initiate combat on collision with player 
+					for(let j = 0; j < gameObjects.length; j++){
+						if(gameObjects[j].type == "player"){
+							//check for collision 
+							if(Math.abs(this.x - gameObjects[j].x) < (this.width + gameObjects[j].width)/2 && Math.abs(this.y - gameObjects[j].y) < (this.height + gameObjects[j].height) / 2){
+								//intiate combat 
+								enemy = gameObjects.indexOf(this);
+								combatant = j;
+								initiateCombat();
+							};
+						};
+					};
+				};
+				
+				draw(){
+					//light green 
+					ctx.fillStyle = "lightgreen";
+					ctx.drawImage(this.sprite,this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+				};
+			};
+			
+			//create goblin 
+			class goblin {
+				constructor(x,y,questions){
+					this.x = x;
+					this.y = y;
+					this.width = tileSize;
+					this.height = tileSize;
+					this.type = "enemy";
+					this.alive = true;
+					this.questions = questions;
+					this.direction = "left";
+					this.sprite = spr_goblinL;
+					gameObjects.push(this);
+				};
+				
+				update(){
+					//initiate combat on collision with player 
+					for(let j = 0; j < gameObjects.length; j++){
+						if(gameObjects[j].type == "player"){
+							//check for collision 
+							if(Math.abs(this.x - gameObjects[j].x) < (this.width + gameObjects[j].width)/2 && Math.abs(this.y - gameObjects[j].y) < (this.height + gameObjects[j].height) / 2){
+								//intiate combat 
+								enemy = gameObjects.indexOf(this);
+								combatant = j;
+								initiateCombat();
+							};
+						};
+					};
+				};
+				
+				draw(){
+					//light green 
+					ctx.fillStyle = "darkgreen";
+					ctx.drawImage(this.sprite,this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+				};
+			};
+			
+			//create main loop 
+			function mainLoop(){
+				//clear screen 
+				ctx.clearRect(0,0,canvas.width,canvas.height);
+			
+				//decide state 
+				if(state == "game"){
+					//kill dead objects 
+					gameObjects = gameObjects.filter(x => x.alive);
+				
+					//draw tiles
+					tileX = tileSize / 2;
+					tileY = tileSize / 2;
+					for(i = 0; i < levels[level].length; i++){
+						//what tile is it?
+						if(levels[level][i] == 0){
+							//draw floor tile 
+							ctx.fillStyle = "lightgrey";
+							ctx.fillRect(tileX - tileSize / 2, tileY - tileSize / 2, tileSize, tileSize);
+						} else if(levels[level][i] == 1){
+							//draw wall tile 
+							//ctx.fillStyle = "darkgrey";
+							//ctx.fillRect(tileX - tileSize / 2, tileY - tileSize / 2, tileSize, tileSize);
+							ctx.drawImage(spr_wall, tileX - tileSize / 2, tileY - tileSize / 2, tileSize, tileSize);
+						};
+						
+						//move along
+						tileX += tileSize;
+						
+						if(tileX >= canvas.width){
+							tileX = tileSize / 2;
+							tileY += tileSize;
+						};
+					};
+				
+					//update game objects 
+					for(i = 0; i < gameObjects.length; i++){
+						gameObjects[i].update();
+					};
+					
+					//draw game objects 
+					for(i = 0; i < gameObjects.length; i++){
+						gameObjects[i].draw();
+					};
+					
+					//draw HUD 
+					ctx.fillStyle = "orange";
+					ctx.globalAlpha = 0.5;
+					ctx.font = "20px Arial";
+					ctx.textAlign = "center";
+					
+					if(playerInstance.moves > 0){
+						ctx.fillText("Player " + playerInstance.id + ": " + playerInstance.moves,canvas.width / 2, canvas.height / 2);
+					} else if(playerInstance.id + 1 < 5) {
+						ctx.fillText("Player " + (playerInstance.id + 1) + ": Press Space to Start",canvas.width / 2, canvas.height / 2);
+					} else {
+						ctx.fillText("Player " + 1 + ": Press Space to Start",canvas.width / 2, canvas.height / 2);
+					};
+					
+					ctx.globalAlpha = 1;	
+				} else if(state == "combat"){
+					//draw question
+					ctx.font = fontSize + "px " +  mainFont;
+					ctx.textAlign = "center";
+					ctx.fillStyle = "white";
+					
+					if(gameObjects[enemy].type == "enemy"){
+						for(i = 0; i < gameObjects[enemy].questions[0][0].length; i++){
+							ctx.fillText(gameObjects[enemy].questions[0][0][i], canvas.width / 2,canvas.height / 2 + (i * fontSize));
+						};
+					
+						ctx.fillText(answerString,canvas.width / 2, canvas.height * 0.9);
+					};
+					
+					/*
+					//play player attack animation 
+					switch(this.id){
+						case 1:
+							ctx.fillStyle = "red";
+							break;
+						
+						case 2:
+							ctx.fillStyle = "blue";
+							break;
+						
+						case 3:
+							ctx.fillStyle = "yellow";
+							break;
+						
+						case 4:
+							ctx.fillStyle = "green";
+							break;
+					};
+						
+					if(playerAttacking == "yes"){
+						//move player closer to enemy 
+						playerX += 8;
+						
+						//check for collision with enemy 
+						if(Math.abs((canvas.width * 0.2 + playerX) - (canvas.width * 0.8 + 32 + enemyX)) < 64){
+							//collision - enemy hit 
+							enemyHit();
+						};
+					} else if(playerAttacking == "retreat"){
+						//move back 
+						playerX -= 8;
+						
+						//behind normal line?
+						if(playerX <= 0){
+							playerX = 0;
+							playerAttacking = "no";
+							hurtEnemy();
+						};
+					} else if(playerAttacking == "dead"){
+						playerY *= 1.1;
+						
+						if(playerY > canvas.height / 2){
+							returnToGame();
+						};
+					} else {
+						playerX = 0;
+					}; 
+					
+					//draw player rectangle
+					ctx.fillRect((canvas.width * 0.2 - 32) + playerX,canvas.height * 0.2 + playerY, 64, 64);
+				
+					//enemy attack
+					if(enemyCountdown <= 0){
+						enemyCountdown = 0;
+						
+						if(enemyAttacking == "no"){
+							enemyAttacking = "yes";
+						};
+					} else {
+						//count down enemy attacking
+						enemyCountdown --;
+					};
+					
+					//enemy charge 
+					if(enemyAttacking == "yes"){
+						enemyX -= 8;
+						
+						if(playerAttacking == "no" && Math.abs((canvas.width * 0.2 + playerX) - (canvas.width * 0.8 + 32 + enemyX)) < 64){
+							//collision - enemy hit 
+							playerHit();
+							enemyAttacking = "retreat";
+						};
+					} else if(enemyAttacking == "dead"){
+						enemyY *= 1.1;
+						
+						if(enemyY > canvas.height / 2){
+							returnToGame();
+						};
+					} else if(enemyAttacking == "retreat"){
+						enemyX += 8;
+						
+						if(enemyX >= 0){
+							enemyX = 0;
+							enemyAttacking = "no";
+						};
+					} else {
+						enemyX = 0;
+					};
+				
+					//draw enemy rectangle 
+					ctx.fillStyle = "lightgreen";
+					ctx.fillRect(canvas.width * 0.8 + enemyX, canvas.height * 0.2, 64, 64);
+					*/
+				};
+				
+				//handle input timers 
+				if(input.left){
+					input.leftDown = true;
+				} else {
+					input.leftDown = false;
+				};
+				
+				if(input.up){
+					input.upDown = true;
+				} else {
+					input.upDown = false;
+				};
+				
+				if(input.down){
+					input.downDown = true;
+				} else {
+					input.downDown = false;
+				};
+				
+				if(input.right){
+					input.rightDown = true;
+				} else {
+					input.rightDown = false;
+				};
+				
+				if(input.space){
+					input.spaceDown = true;
+				} else {
+					input.spaceDown = false;
+				};
+				
+				if(input.mouse){
+					input.mouseDown = true;
+				} else {
+					input.mouseDown = false;
+				};
+				
+				//call next frame 
+				requestAnimationFrame(mainLoop);
+			};
+			
+			//collidingWithWall
+			function collidingWithWall(x,y,width,height){
+				//draw tiles
+				tileX = tileSize / 2;
+				tileY = tileSize / 2;
+				for(let j  = 0; j < levels[level].length; j++){
+					//what tile is it?
+					if(levels[level][j] == 1){
+						//collide with wall tile 
+						if(Math.abs(tileX - x) < (tileSize + width) / 2 && Math.abs(tileY - y) < (tileSize + height) / 2){
+							return true;
+						};
+					};
+					
+					//move along
+					tileX += tileSize;
+					
+					if(tileX >= canvas.width){
+						tileX = tileSize / 2;
+						tileY += tileSize;
+					};
+				};
+				
+				return false;
+			};
+			
+			//initiateCombat
+			function initiateCombat(){
+				state = "combat";
+				answerString = "";
+				enemyCountdown = maxEnemyCountdown;
+				playerAttacking = "no";
+				enemyAttacking = "no";
+				playerX = 0;
+				playerY = 0;
+				enemyX = 0;
+				enemyY = 0;
+			};
+			
+			//start game 
+			function startGame(){
+				//start level 0
+				startLevel(0);
+			};
+			
+			//start level 
+			function startLevel(lev){
+				//set level 
+				level = lev;
+				
+				//ask for players 
+				players = 4;
+				
+				//set variables 
+				state = "game";
+
+				//create players 
+				for(i = 0; i < players; i++){
+					//create new player 
+					switch(i){
+						case 0:
+							instance = new player(tileSize / 2,tileSize / 2,1,player1Class);
+							break;
+						
+						case 1:
+							instance = new player(canvas.width - tileSize / 2,tileSize / 2,2,player2Class);
+							break;
+							
+						case 2:
+							instance = new player(tileSize / 2,canvas.height - tileSize / 2,3,player3Class);
+							break;
+							
+						case 3:
+							instance = new player(canvas.width - tileSize / 2,canvas.height - tileSize / 2,4,player4Class);
+							break;
+					};
+				};
+				
+				//draw tiles
+				tileX = tileSize / 2;
+				tileY = tileSize / 2;
+				for(i = 0; i < levels[level].length; i++){
+					//what tile is it?
+					if(levels[level][i] == s){
+						//create slime 
+						instance = new slime(tileX, tileY, [questionsArray[0]]);
+						questionsArray.shift();
+					} else if(levels[level][i] == g){
+						//create goblin
+						instance = new goblin(tileX, tileY, [questionsArray[0],questionsArray[1]]);
+						questionsArray.shift();
+						questionsArray.shift();
+					};
+					
+					//move along
+					tileX += tileSize;
+					
+					if(tileX >= canvas.width){
+						tileX = tileSize / 2;
+						tileY += tileSize;
+					};
+				};
+			};
+			
+			//set fullscreen 
+			//canvas.requestFullscreen();
+			
+			//enemy hit 
+			function enemyHit(){
+				//switch player state 
+				playerAttacking = "retreat";
+			};
+			
+			//hurt enemy 
+			function hurtEnemy(){
+				//remove question from list 
+				gameObjects[enemy].questions.shift();
+				
+				if(gameObjects[enemy].questions.length == 0){
+					//go back to game 
+					gameObjects[enemy].alive = false;
+					
+					//play enemy death animation
+					enemyAttacking = "dead";
+					enemyY = 5;
+					state = "game";
+				};
+				
+				//reset enemy countdown 
+				enemyAttacking = "no";
+				playerAttacking = "no";
+				enemyCountdown = maxEnemyCountdown;
+			};
+			
+			//player hit 
+			function playerHit(){
+				//state = "game";
+					
+				//play player death animation 
+				playerAttacking = "dead";
+					
+				gameObjects[combatant].lives --;
+				
+				//send them back to the spawn point 
+				switch(gameObjects[combatant].id){
+					case 1:
+						gameObjects[combatant].x = gameObjects[combatant].width / 2;
+						gameObjects[combatant].y = gameObjects[combatant].height / 2;
+						break;
+					
+					case 2:
+						gameObjects[combatant].x = canvas.width - gameObjects[combatant].width / 2;
+						gameObjects[combatant].y = gameObjects[combatant].height / 2;
+						break;
+					
+					case 3:
+						gameObjects[combatant].x = gameObjects[combatant].width / 2;
+						gameObjects[combatant].y = canvas.height - gameObjects[combatant].height / 2;
+						break;
+					
+					case 4:
+						gameObjects[combatant].x = canvas.width - gameObjects[combatant].width / 2;
+						gameObjects[combatant].y = canvas.height - gameObjects[combatant].height / 2;
+						break;
+				};
+				
+				//set player 1 
+				playerY = 5;
+				
+				//set enemy retreat 
+				enemyAttacking = "retreat";
+			};
+			
+			//return to game 
+			function returnToGame(){
+				//set game state 
+				state = "game";
+			};
+			
+			//add event listeners 
+			document.addEventListener("keydown", keyDownHandler);
+			document.addEventListener("keyup", keyUpHandler);
+			document.addEventListener("mousedown", mouseDownHandler);
+			document.addEventListener("mouseup", mouseUpHandler);
+			document.addEventListener("mousemove", mouseMoveHandler);
+			
+			//key down handler 
+			function keyDownHandler(e){
+				switch(e.keyCode){
+					case 37:
+						input.left = true;
+						break;
+					
+					case 38:
+						input.up = true;
+						break;
+					
+					case 39:
+						input.right = true;
+						break;
+					
+					case 40:
+						input.down = true;
+						break;
+					
+					case 32:
+						input.space = true;
+						break;
+				};
+				
+				if(state == "combat"){
+					//check if valid 
+					if(playerAttacking == "no" && enemyAttacking != "dead"){
+						//add to answer string 
+						if(e.keyCode == 32 || (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 65 && e.keyCode <= 90)){
+							answerString += String.fromCharCode(e.keyCode);
+						} else if(e.keyCode == 8) {
+							if(answerString.length > 0){
+								answerString = answerString.substring(0,answerString.length - 1);
+							};
+						} else if(e.keyCode == 192){
+							answerString += "'";
+						} else if(e.keyCode == 13){
+							//submit answer
+							let correct = false;
+							for(let k = 0; k < gameObjects[enemy].questions[0][1].length; k++){
+								if(gameObjects[enemy].questions[0][1][k].toUpperCase() == answerString.toUpperCase()){
+									//correct - defeat enemy 
+									correct = true;
+								};
+							};
+							
+							//check if correct 
+							if(correct){
+								//player attacking 
+								//playerAttacking = "yes";
+								hurtEnemy();
+							} else {
+								//enemy attack
+								enemyAttacking = "yes";
+							};
+							
+							//clear answer
+							answerString = "";
+						};
+					};
+				} else {
+					if(e.keyCode == 70){
+						canvas.requestFullscreen();
+					};
+				};
+			};
+			
+			//key up handler 
+			function keyUpHandler(e){
+				switch(e.keyCode){
+					case 37:
+						input.left = false;
+						break;
+					
+					case 38:
+						input.up = false;
+						break;
+					
+					case 39:
+						input.right = false;
+						break;
+					
+					case 40:
+						input.down = false;
+						break;
+					
+					case 32:
+						input.space = false;
+						break;
+				};
+			};
+			
+			//mouse down 
+			function mouseDownHandler(){
+				input.mouseDown = true;
+			};
+			
+			//mouse up 
+			function mouseUpHandler(){
+				input.mouseUp = false;
+			};
+			
+			//mosue move 
+			function mouseMoveHandler(e){
+				input.x = e.x - canvas.offsetLeft + window.scrollX;
+				input.y = e.y - canvas.offsetTop + window.scrollY;
+			};
+			
+			//start game 
+			startGame();
+			
+			//start main loop 
+			mainLoop();
+		</script>
+	</body>
+</html>
